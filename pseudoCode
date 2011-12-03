@@ -19,9 +19,6 @@ if reduced_to_ten_digits(message.@display_number) in list_of_dispatchers_numbers
 	# passed to all the dispatchers to be dealt
 	# with manually
 
-	# that is, assuming we can find to a way to make gv cough
-	# up a list of the forwarding numbers
-
 	# assuming that...
 
 	dispatchers.each { |recipient|

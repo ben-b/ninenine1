@@ -12,11 +12,14 @@ end
 EventMachine.run {
   EventMachine.add_periodic_timer(10) {
     messages = GoogleText::Message.unread
-    if messages
-      puts GoogleText::Message.unread.inspect
-    else
-      puts "no new messages"
-    end
+      if messages
+	#puts GoogleText::Message.unread.inspect
+        messages.each { |message|
+          display_number = message.display_number.scan(/\d*/).join
+          puts "New message from \+1"+display_number
+        }
+      else
+        puts "no new messages"
+      end
   }
 }
-
