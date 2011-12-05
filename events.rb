@@ -19,9 +19,9 @@ page            = client.session.get("https://www.google.com/voice#phones")
 
 forwarderDataBlock      = /^\s*'phones':.*,$/.match(page)
 
-forwardingNumbers       = forwarderDataBlock.to_s.scan(/(\+\d{11,11})/)
+forwardingNumbers       = forwarderDataBlock.to_s.scan(/\+\d{11,11}/)
 
-p forwardingNumbers[1][0]
+puts forwardingNumbers
 
 EventMachine.run {
   EventMachine.add_periodic_timer(10) {
@@ -33,9 +33,9 @@ EventMachine.run {
           puts display_number
           puts "New message from "+display_number
           if forwardingNumbers.include?(display_number)
-            p "This message is from a dispatcher."
+            puts "This message is from a dispatcher."
           else
-            p "This message is not from a dispatcher."           
+            puts "This message is not from a dispatcher."           
           end
 
         }
