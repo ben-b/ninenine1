@@ -9,26 +9,50 @@ GoogleText.configure do |c|
     c.password     = config["credentials"]["password"]
 end
 
-client  = GoogleText::Client.new
+module Dispatcher 
 
-if !client.logged_in? then
-        client.login
+  def forwarding_numbers
+
+    if logged_in? then
+      login
+    end
+    page = session.get("https://www.google.com/voice#phones")
+
+    forwarderDataBlock      = /^\s*'phones':.*,$/.match(page)
+
+    forwarderDataBlock.to_s.scan(/\+\d{11,11}/)
+  end
+
+#  @@forwarding_numbers = forwarding_numbers 
+
+#  def forwarding_numbers
+#    puts @@forwarding_numbers
+#  end
+
 end
 
-page            = client.session.get("https://www.google.com/voice#phones")
-
-forwarderDataBlock      = /^\s*'phones':.*,$/.match(page)
-
-forwardingNumbers       = forwarderDataBlock.to_s.scan(/\+\d{11,11}/)
-
-puts forwardingNumbers
+class GoogleText::Client
+  include Dispatcher
+end
 
 EventMachine.run {
   EventMachine.add_periodic_timer(10) {
     messages = GoogleText::Message.unread
-      if messages
-	#puts GoogleText::Message.unread.inspect
-        messages.each { |message|
+
+    if messages 
+      messages.each { |message|
+        puts message.inspect
+        puts message.client.forwarding_numbers
+      }
+    else
+      puts "no new messages"
+    end
+  }
+}
+
+=begin
+
+  # this is the old block to execute after 'messages.each...'
           display_number = "+1"+message.display_number.scan(/\d*/).join
           puts display_number
           puts "New message from "+display_number
@@ -37,10 +61,4 @@ EventMachine.run {
           else
             puts "This message is not from a dispatcher."           
           end
-
-        }
-      else
-        puts "no new messages"
-      end
-  }
-}
+=end
