@@ -34,16 +34,23 @@ end
 module Dispatch
 
   def sender
-    puts "This is the sender's number:"
     sender = "+1"+display_number.match(/\((\d{3,3})\)\s*(\d{3,3})-(\d{4,4})/).captures.join.to_s
   end
 
   def is_dispatch?
-    puts "Is it from a dispatcher?"
-    puts "These are the dispatcher's numbers:"
-    puts client.forwarding_numbers
-    puts sender
     client.forwarding_numbers.include?(sender)
+  end
+
+  def dispatch
+
+    dispatch_body = text.match(/(.*)!!(.*)/)
+    if !dispatch_body
+      puts "Message is not a properly formatted dispatch.  It must start with a list of recipient group codes terminated by '!!'"
+    else
+      dispatch_groups = dispatch_body[1]
+      dispatch_body = dispatch_body[2]
+    end
+
   end
 
 end
@@ -65,6 +72,7 @@ EventMachine.run {
         puts message.inspect
         if message.is_dispatch?
           puts "Message is from dispatcher "+message.sender
+          message.dispatch
         end
       }
     else
