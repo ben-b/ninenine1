@@ -13,7 +13,7 @@ module Dispatcher
 
   def forwarding_numbers
 
-    if logged_in? then
+    if !logged_in? then
       login
     end
     page = session.get("https://www.google.com/voice#phones")
@@ -31,8 +31,29 @@ module Dispatcher
 
 end
 
+module Dispatch
+
+  def sender
+    puts "This is the sender's number:"
+    sender = "+1"+display_number.match(/\((\d{3,3})\)\s*(\d{3,3})-(\d{4,4})/).captures.join.to_s
+  end
+
+  def is_dispatch?
+    puts "Is it from a dispatcher?"
+    puts "These are the dispatcher's numbers:"
+    puts client.forwarding_numbers
+    puts sender
+    client.forwarding_numbers.include?(sender)
+  end
+
+end
+
 class GoogleText::Client
   include Dispatcher
+end
+
+class GoogleText::Message
+  include Dispatch
 end
 
 EventMachine.run {
@@ -42,7 +63,9 @@ EventMachine.run {
     if messages 
       messages.each { |message|
         puts message.inspect
-        puts message.client.forwarding_numbers
+        if message.is_dispatch?
+          puts "Message is from dispatcher "+message.sender
+        end
       }
     else
       puts "no new messages"
