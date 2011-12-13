@@ -20,7 +20,7 @@ module Dispatcher
 
     forwarderDataBlock      = /^\s*'phones':.*,$/.match(page)
 
-    forwarderDataBlock.to_s.scan(/\+\d{11,11}/)
+    forwarderDataBlock.to_s.scan(/\+\d{11}/)
   end
 
 #  @@forwarding_numbers = forwarding_numbers 
@@ -34,7 +34,7 @@ end
 module Dispatch
 
   def sender
-    sender = "+1"+display_number.match(/\((\d{3,3})\)\s*(\d{3,3})-(\d{4,4})/).captures.join.to_s
+    sender = "+1"+display_number.match(/\((\d{3})\)\s*(\d{3})-(\d{4})/).captures.join.to_s
   end
 
   def is_dispatch?
@@ -43,14 +43,20 @@ module Dispatch
 
   def dispatch
 
-    dispatch_body = text.match(/(.*)!!(.*)/)
-    if !dispatch_body
+    body = text.match(/(.*)!!(.*)/)
+    if !body
       puts "Message is not a properly formatted dispatch.  It must start with a list of recipient group codes terminated by '!!'"
     else
-      dispatch_groups = dispatch_body[1]
-      dispatch_body = dispatch_body[2]
+      groups = body[1]
+      body = body[2]
     end
 
+    #this needs google contacts magic
+    recip_list = transform_list_of_group_codes_to_list_of_phone_numbers(groups)
+    recip_list.each { |recip|
+      dispatch = GoogleText::message.new(:text => body, :to => recip)
+      dispatch.send
+    }
   end
 
 end
