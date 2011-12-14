@@ -11,23 +11,31 @@ end
 
 module Dispatcher 
 
-  def forwarding_numbers
-
+  def page(url="https://www.google.com/voice#phones")
     if !logged_in? then
       login
     end
-    page = session.get("https://www.google.com/voice#phones")
 
-    forwarderDataBlock      = /^\s*'phones':.*,$/.match(page)
-
-    forwarderDataBlock.to_s.scan(/\+\d{11}/)
+    session.get(url)
   end
 
-#  @@forwarding_numbers = forwarding_numbers 
+  def contactsDataBlock
+    /^\s*'contactPhones':.*,$/.match(page)
+  end
 
-#  def forwarding_numbers
-#    puts @@forwarding_numbers
-#  end
+  def contacts
+    #sure could use more processing, but at least we've got
+    #an array of all contacts
+    contactsDataBlock.to_s.scan(/"\+\d{11}.*?\},/)
+  end
+
+  def forwarderDataBlock
+    /^\s*'phones':.*,$/.match(page)
+  end
+
+  def forwarding_numbers
+    forwarderDataBlock.to_s.scan(/\+\d{11}/)
+  end
 
 end
 
@@ -52,11 +60,11 @@ module Dispatch
     end
 
     #this needs google contacts magic
-    recip_list = transform_list_of_group_codes_to_list_of_phone_numbers(groups)
-    recip_list.each { |recip|
-      dispatch = GoogleText::message.new(:text => body, :to => recip)
-      dispatch.send
-    }
+    # recip_list = transform_list_of_group_codes_to_list_of_phone_numbers(groups)
+    #recip_list.each { |recip|
+    #  dispatch = GoogleText::message.new(:text => body, :to => recip)
+    #  dispatch.send
+    #}
   end
 
 end
@@ -69,8 +77,9 @@ class GoogleText::Message
   include Dispatch
 end
 
-EventMachine.run {
-  EventMachine.add_periodic_timer(10) {
+=begin
+#EventMachine.run {
+#  EventMachine.add_periodic_timer(10) {
     messages = GoogleText::Message.unread
 
     if messages 
@@ -84,18 +93,6 @@ EventMachine.run {
     else
       puts "no new messages"
     end
-  }
-}
-
-=begin
-
-  # this is the old block to execute after 'messages.each...'
-          display_number = "+1"+message.display_number.scan(/\d*/).join
-          puts display_number
-          puts "New message from "+display_number
-          if forwardingNumbers.include?(display_number)
-            puts "This message is from a dispatcher."
-          else
-            puts "This message is not from a dispatcher."           
-          end
+#  }
+#}
 =end
