@@ -20,13 +20,37 @@ module Dispatcher
   end
 
   def contactsDataBlock
-    /^\s*'contactPhones':.*,$/.match(page)
+    url	= "https://www.google.com/voice/c/b/"+account.email+"/ui/ContactManager"
+    /^.*"Contacts":\[(.*)\],"Groups":\[(.*)\],/.match(page(url))
   end
 
   def contacts
-    #sure could use more processing, but at least we've got
-    #an array of all contacts
-    contactsDataBlock.to_s.scan(/"\+\d{11}.*?\},/)
+    # this array needs to be parsed into a hash so that contacts
+    # can be looked up by group id numbers.  those are also the only
+    # two data we care about
+    contactsDataBlock[1].to_s.scan(/\{"Affinity".*?\},/)
+  end
+
+  def groups
+    contactsDataBlock[2].to_s.scan(/\{.*?\}/)
+  end
+
+  def groups_hash
+    id = "none"
+    gh = Hash.new
+
+    groups.each { |group|
+      group.match(/\{(.*)\}/)[1].split(",").each { |pair|
+        /"(.*)":"?(.*[^"])/.match(pair) { |m|
+          if m[1]=="id"
+            id = m[2]
+          elsif m[1]=="Name"
+            gh[m[2]] = id
+          end
+        }
+      }
+    }
+    group_hash = gh
   end
 
   def forwarderDataBlock
