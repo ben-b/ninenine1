@@ -1,6 +1,7 @@
 require 'eventmachine'
 require 'google_text'
 require 'yaml'
+require 'json'
 
 config = YAML.load_file("./config.yml")
 
@@ -21,15 +22,17 @@ module Dispatcher
 
   def contactsDataBlock
     url	= "https://www.google.com/voice/c/b/"+account.email+"/ui/ContactManager"
-    /^.*"Contacts":\[(.*)\],"Groups":\[(.*)\],/.match(page(url))
+    JSON.parse(/initContactData = (.*?);/.match(page(url))[1]) 
   end
 
   def contacts
     # this array needs to be parsed into a hash so that contacts
     # can be looked up by group id numbers.  those are also the only
-    # two data we care about
-    contactsDataBlock[1].to_s.scan(/\{"Affinity".*?\},/)
   end
+
+=begin
+
+  # well, that was a lot of work and fancy regex dancing down the tubes :/
 
   def groups
     contactsDataBlock[2].to_s.scan(/\{.*?\}/)
@@ -52,6 +55,8 @@ module Dispatcher
     }
     group_hash = gh
   end
+
+=end
 
   def forwarderDataBlock
     /^\s*'phones':.*,$/.match(page)
