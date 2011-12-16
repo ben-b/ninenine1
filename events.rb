@@ -16,8 +16,9 @@ module Dispatcher
     if !logged_in? then
       login
     end
-
-    session.get(url)
+    puts url
+    page = session.get(url)
+#    puts page
   end
 
   def contactsDataBlock
@@ -71,11 +72,11 @@ module Dispatcher
   end
 
   def forwarderDataBlock
-    /^\s*'phones':.*,$/.match(page)
+    forwarderDataBlock = /^\s*'phones':.*,$/.match(page)
   end
 
   def forwarding_numbers
-    forwarderDataBlock.to_s.scan(/\+\d{11}/)
+   forwarding_numbers = forwarderDataBlock.to_s.scan(/\+\d{11}/)
   end
 
 end
@@ -87,6 +88,7 @@ module Dispatch
   end
 
   def is_dispatch?
+
     client.forwarding_numbers.include?(sender)
   end
 
@@ -112,6 +114,7 @@ module Dispatch
   def dispatch
 
     body = text.match(/(.*)!!(.*)/)
+
     if !body
       puts "Message is not a properly formatted dispatch.  It must start with a list of recipient group codes terminated by '!!'"
     else
@@ -120,7 +123,10 @@ module Dispatch
     end
 
     first_responders(groups).each { |fr|
-      dispatch = GoogleText::Message.new(:text => body, to => fr)
+      puts fr
+      dispatch = GoogleText::Message.new(:text => body, :to => fr)
+      puts "Send dispatch!"
+      puts dispatch.inspect
       dispatch.send
     }
 
@@ -142,7 +148,7 @@ end
 
     if messages 
       messages.each { |message|
-        puts message.inspect
+        puts message
         if message.is_dispatch?
           puts "Message is from dispatcher "+message.sender
           message.dispatch
