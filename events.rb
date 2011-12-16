@@ -26,37 +26,49 @@ module Dispatcher
   end
 
   def contacts
-    # this array needs to be parsed into a hash so that contacts
-    # can be looked up by group id numbers.  those are also the only
+
+    ch = Hash.new
+    number = nil
+
+    contactsDataBlock["Body"]["Contacts"].each { |contact|
+    if contact.has_key?("Phones")
+      contact["Phones"].each { |phone|
+        if phone["Type"]["Id"] == "MOBILE"
+          number = phone["Number"].match(/^[\+]?[1]?\D*(\d{3})?\D*(\d{3})\D*(\d{4})/)
+          if number
+            number = "+1"+number.captures.join
+            ga = []
+            contact["Groups"].each { |group|
+
+               if ch.has_key?(group["id"])
+                 ch[group["id"]].push(number)
+               else
+                 ch[group["id"]] = [number]
+               end
+
+            }
+
+          else
+#            puts phone["Number"]+" is not a valid phone number!"
+          end
+        else
+#          puts phone["Number"]+" is not a cell.  it won't do any good to text it."
+        end
+      }
+    end
+    }
+
+    contacts = ch
+
   end
-
-=begin
-
-  # well, that was a lot of work and fancy regex dancing down the tubes :/
 
   def groups
-    contactsDataBlock[2].to_s.scan(/\{.*?\}/)
-  end
-
-  def groups_hash
-    id = "none"
     gh = Hash.new
-
-    groups.each { |group|
-      group.match(/\{(.*)\}/)[1].split(",").each { |pair|
-        /"(.*)":"?(.*[^"])/.match(pair) { |m|
-          if m[1]=="id"
-            id = m[2]
-          elsif m[1]=="Name"
-            gh[m[2]] = id
-          end
-        }
-      }
+    contactsDataBlock["Body"]["Groups"].each { |group|
+      gh[group["Name"]] = group["id"]
     }
-    group_hash = gh
+    groups = gh 
   end
-
-=end
 
   def forwarderDataBlock
     /^\s*'phones':.*,$/.match(page)
